@@ -1,0 +1,60 @@
+{
+  "name": "buddy-script",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && prisma migrate deploy && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.3.4",
+    "@prisma/client": "^5.9.1",
+    "@tanstack/react-query": "^5.18.1",
+    "bcryptjs": "^2.4.3",
+    "blurhash": "^2.0.5",
+    "cloudinary": "^1.41.3",
+    "clsx": "^2.1.0",
+    "jose": "^5.2.2",
+    "lucide-react": "^0.344.0",
+    "next": "14.2.35",
+    "prisma": "^5.9.1",
+    "react": "^18.2.0",
+    "react-blurhash": "^0.3.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.50.1",
+    "react-hot-toast": "^2.4.1",
+    "sharp": "^0.33.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.11.16",
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "allowScripts": {
+    "@prisma/client@5.22.0": true,
+    "@prisma/engines@5.22.0": true,
+    "core-js@3.49.0": true,
+    "prisma@5.22.0": true,
+    "sharp@0.33.5": true,
+    "unrs-resolver@1.12.2": true
+  }
+}
