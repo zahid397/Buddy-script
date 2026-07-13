@@ -19,7 +19,7 @@ export default function BookmarksPage() {
     <div>
       <div className="_feed_inner_area _b_radious6 mb-4 bg-white px-5 py-4">
         <h2 className="text-base font-semibold text-gray-800">Saved Posts</h2>
-        <p className="mt-1 text-xs text-gray-400">Posts you've bookmarked to read again later.</p>
+        <p className="mt-1 text-xs text-gray-400">Posts you&apos;ve bookmarked to read again later.</p>
       </div>
 
       {isLoading ? <LoadingSpinner /> : null}
