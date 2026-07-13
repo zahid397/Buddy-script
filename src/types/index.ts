@@ -155,6 +155,8 @@ export type ProfileDTO = {
 };
 
 export type SuggestedUserDTO = PostAuthor & {
+  bio: string | null;
+  mutualFriendCount: number;
   friendshipStatus: FriendshipStatus;
   friendRequestId: string | null;
   isFollowedByMe: boolean;

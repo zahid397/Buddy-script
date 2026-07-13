@@ -3,10 +3,9 @@
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { BookMarked, Compass, Gamepad2, Save, Settings, UserSearch, Users2 } from 'lucide-react';
-import { useUserSuggestions } from '@/hooks/useFollow';
 import { useEvents } from '@/hooks/useEvents';
-import FriendRequestButton from '../common/FriendRequestButton';
 import FriendRequestsPanel from '../common/FriendRequestsPanel';
+import PeopleYouMayKnow from '../common/PeopleYouMayKnow';
 import EventCard from '../common/EventCard';
 
 function notImplemented() {
@@ -24,7 +23,6 @@ const EXPLORE_LINKS = [
 ];
 
 export default function LeftSidebar() {
-  const { data: suggestions, isLoading } = useUserSuggestions('friends', 3);
   const { data: eventsData } = useEvents(2);
 
   return (
@@ -53,44 +51,7 @@ export default function LeftSidebar() {
       <FriendRequestsPanel />
 
       <div className="_layout_left_sidebar_inner">
-        <div className="_left_inner_area_suggest _padd_t24 _padd_b6 _padd_r24 _padd_l24 _b_radious6 _feed_inner_area">
-          <div className="_left_inner_area_suggest_content _mar_b24">
-            <h4 className="_left_inner_area_suggest_content_title _title5">Suggested People</h4>
-            <span className="_left_inner_area_suggest_content_txt">
-              <Link href="/search" className="_left_inner_area_suggest_content_txt_link">
-                See All
-              </Link>
-            </span>
-          </div>
-          {isLoading ? <p className="text-xs text-gray-400">Loading…</p> : null}
-          {!isLoading && suggestions?.items.length === 0 ? (
-            <p className="text-xs text-gray-400">No suggestions right now.</p>
-          ) : null}
-          {suggestions?.items.map((p) => (
-            <div className="_left_inner_area_suggest_info" key={p.id}>
-              <div className="_left_inner_area_suggest_info_box">
-                <div className="_left_inner_area_suggest_info_image">
-                  <Link href={`/profile/${p.id}`}>
-                    {p.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.avatarUrl} alt={p.firstName} className="_info_img" />
-                    ) : null}
-                  </Link>
-                </div>
-                <div className="_left_inner_area_suggest_info_txt">
-                  <Link href={`/profile/${p.id}`}>
-                    <h4 className="_left_inner_area_suggest_info_title">
-                      {p.firstName} {p.lastName}
-                    </h4>
-                  </Link>
-                </div>
-              </div>
-              <div className="_left_inner_area_suggest_info_link">
-                <FriendRequestButton userId={p.id} status={p.friendshipStatus} requestId={p.friendRequestId} compact />
-              </div>
-            </div>
-          ))}
-        </div>
+        <PeopleYouMayKnow limit={5} />
       </div>
 
       <div className="_layout_left_sidebar_inner">

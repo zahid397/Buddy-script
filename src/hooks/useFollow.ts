@@ -48,5 +48,17 @@ export function useUserSuggestions(type: 'friends' | 'follow', limit = 5) {
     queryKey: ['user-suggestions', type, limit],
     queryFn: () =>
       apiFetch<{ items: import('@/types').SuggestedUserDTO[] }>(`/api/users/suggestions?type=${type}&limit=${limit}`),
+    // Keeps "Request Sent -> Friends" (a demo bot auto-accepting) feeling
+    // live even without the demo tick's own cache invalidation landing
+    // first — cheap query, fine to refresh periodically regardless of mode.
+    refetchInterval: 15000,
+  });
+}
+
+export function useDismissSuggestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => apiFetch(`/api/users/suggestions/${userId}/dismiss`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user-suggestions'] }),
   });
 }

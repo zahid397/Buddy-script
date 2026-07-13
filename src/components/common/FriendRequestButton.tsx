@@ -132,7 +132,7 @@ export default function FriendRequestButton({
       disabled={busy}
       className="inline-flex items-center gap-1 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover disabled:opacity-60"
     >
-      <UserPlus size={14} /> Add Friend
+      <UserPlus size={14} /> {send.isPending ? 'Sending…' : 'Add Friend'}
     </button>
   );
 }
