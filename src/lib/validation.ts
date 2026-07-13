@@ -75,10 +75,58 @@ export const updateProfileSchema = z.object({
   firstName: z.string().trim().min(1).max(50).optional(),
   lastName: z.string().trim().min(1).max(50).optional(),
   bio: z.string().trim().max(280).optional().nullable(),
+  location: z.string().trim().max(100).optional().nullable(),
   avatarUrl: z.string().url().optional().nullable(),
   coverImageUrl: z.string().url().optional().nullable(),
 });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters').max(72),
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: 'New password must be different from the current password',
+    path: ['newPassword'],
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const contactPermissionSchema = z.enum(['EVERYONE', 'FRIENDS', 'NOBODY']);
+
+export const updatePrivacySchema = z.object({
+  profileVisibility: postVisibilitySchema.optional(),
+  defaultPostVisibility: postVisibilitySchema.optional(),
+  whoCanSendFriendRequest: contactPermissionSchema.optional(),
+  whoCanMessage: contactPermissionSchema.optional(),
+});
+export type UpdatePrivacyInput = z.infer<typeof updatePrivacySchema>;
+
+export const updateNotificationPrefsSchema = z.object({
+  notifyOnMessage: z.boolean().optional(),
+  notifyOnFriendRequest: z.boolean().optional(),
+  notifyOnComment: z.boolean().optional(),
+  notifyOnGroupActivity: z.boolean().optional(),
+  notifyOnEvent: z.boolean().optional(),
+});
+export type UpdateNotificationPrefsInput = z.infer<typeof updateNotificationPrefsSchema>;
+
+export const updateAppearanceSchema = z.object({
+  themePreference: z.enum(['LIGHT', 'DARK']).optional(),
+  feedDensity: z.enum(['COMFORTABLE', 'COMPACT']).optional(),
+});
+export type UpdateAppearanceInput = z.infer<typeof updateAppearanceSchema>;
+
+export const createGroupPostSchema = z.object({
+  content: z.string().trim().min(1, 'Post cannot be empty').max(3000),
+});
+export type CreateGroupPostInput = z.infer<typeof createGroupPostSchema>;
+
+export const submitGameScoreSchema = z.object({
+  gameType: z.enum(['TIC_TAC_TOE', 'MEMORY_MATCH', 'REACTION_TIMER']),
+  score: z.number().int().min(0).max(1_000_000),
+});
+export type SubmitGameScoreInput = z.infer<typeof submitGameScoreSchema>;
 
 export const searchQuerySchema = z.object({
   q: z.string().trim().min(1).max(100),
