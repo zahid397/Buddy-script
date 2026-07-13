@@ -13,6 +13,7 @@ export async function createNotification(params: {
   replyId?: string | null;
   eventId?: string | null;
   groupId?: string | null;
+  demoEventKey?: string | null;
 }) {
   if (params.actorId && params.actorId === params.userId) return null;
   return prisma.notification.create({
@@ -25,6 +26,7 @@ export async function createNotification(params: {
       replyId: params.replyId ?? null,
       eventId: params.eventId ?? null,
       groupId: params.groupId ?? null,
+      demoEventKey: params.demoEventKey ?? null,
     },
   });
 }

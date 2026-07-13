@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createNotification } from '@/lib/notifications';
+import { isBetterScore } from '@/lib/games';
 import { COMMENT_TEMPLATES, POST_TEMPLATES, pickAvoidingRepeat } from './content';
 import { findLatestUnansweredMessage, tryMaterializeReply } from './reply-engine';
 
@@ -11,11 +12,20 @@ export type DemoEventType =
   | 'FRIEND_ACCEPT'
   | 'MESSAGE'
   | 'MESSAGE_REPLY'
-  | 'EVENT_ATTEND';
+  | 'EVENT_ATTEND'
+  | 'LEARN_SUGGEST'
+  | 'LEARN_COMPLETE'
+  | 'SAVE_POST'
+  | 'GROUP_POST'
+  | 'GROUP_JOIN'
+  | 'GAME_LEADERBOARD';
 
 export type RandomFn = () => number;
 
-// Section 2 of the spec, in event-type order.
+// Section 2 of the original spec, in event-type order, plus later-added
+// module events appended with modest weights — the pool is additive, so
+// existing ratios stay relatively intact rather than being hand-rebalanced
+// to a new 100.
 const WEIGHTS: [DemoEventType, number][] = [
   ['POST', 15],
   ['LIKE', 20],
@@ -25,6 +35,12 @@ const WEIGHTS: [DemoEventType, number][] = [
   ['MESSAGE', 15],
   ['MESSAGE_REPLY', 10],
   ['EVENT_ATTEND', 5],
+  ['LEARN_SUGGEST', 5],
+  ['LEARN_COMPLETE', 5],
+  ['SAVE_POST', 5],
+  ['GROUP_POST', 5],
+  ['GROUP_JOIN', 5],
+  ['GAME_LEADERBOARD', 5],
 ];
 
 /** Weighted-random event type selection. Accepts an injectable RNG
@@ -236,6 +252,145 @@ async function handleEventAttend(tickUserId: string, idempotencyKey: string): Pr
   }
 }
 
+async function handleLearnSuggest(tickUserId: string, idempotencyKey: string): Promise<TickResult> {
+  const lesson = await prisma.learningLesson.findFirst({
+    where: { progress: { none: { userId: tickUserId } } },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (!lesson) return null;
+
+  try {
+    await createNotification({ userId: tickUserId, type: 'LESSON_RECOMMENDED', demoEventKey: idempotencyKey });
+    return { event: 'LEARN_SUGGEST', detail: lesson.id };
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return null;
+    throw err;
+  }
+}
+
+async function handleLearnComplete(idempotencyKey: string): Promise<TickResult> {
+  const bot = await getRandomDemoBot();
+  if (!bot) return null;
+
+  const lesson = await prisma.learningLesson.findFirst({
+    where: { progress: { none: { userId: bot.id } } },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (!lesson) return null;
+
+  try {
+    await prisma.userLessonProgress.create({
+      data: { userId: bot.id, lessonId: lesson.id, completedAt: new Date(), demoEventKey: idempotencyKey },
+    });
+    return { event: 'LEARN_COMPLETE', detail: lesson.id };
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return null;
+    throw err;
+  }
+}
+
+async function handleSavePost(tickUserId: string, idempotencyKey: string): Promise<TickResult> {
+  const bot = await getRandomDemoBot();
+  if (!bot) return null;
+
+  const targetPost = await prisma.post.findFirst({
+    where: { userId: tickUserId, saves: { none: { userId: bot.id } } },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!targetPost) return null;
+
+  try {
+    await prisma.savedPost.create({ data: { userId: bot.id, postId: targetPost.id, demoEventKey: idempotencyKey } });
+    return { event: 'SAVE_POST', detail: targetPost.id };
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return null;
+    throw err;
+  }
+}
+
+async function handleGroupPost(idempotencyKey: string): Promise<TickResult> {
+  const group = await prisma.group.findFirst({ where: { members: { some: {} } }, orderBy: { createdAt: 'asc' } });
+  if (!group) return null;
+
+  const membership = await prisma.groupMember.findFirst({
+    where: { groupId: group.id, user: { isDemoAccount: true } },
+  });
+  const bot = membership ? { id: membership.userId } : await getRandomDemoBot();
+  if (!bot) return null;
+
+  const content = pickAvoidingRepeat(COMMENT_TEMPLATES, null);
+
+  try {
+    const post = await prisma.groupPost.create({
+      data: { groupId: group.id, userId: bot.id, content, demoEventKey: idempotencyKey },
+    });
+    const otherMembers = await prisma.groupMember.findMany({
+      where: { groupId: group.id, userId: { not: bot.id } },
+      select: { userId: true },
+    });
+    await Promise.all(
+      otherMembers.map((m) =>
+        createNotification({ userId: m.userId, actorId: bot.id, type: 'GROUP_POST', groupId: group.id })
+      )
+    );
+    return { event: 'GROUP_POST', detail: post.id };
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return null;
+    throw err;
+  }
+}
+
+async function handleGroupJoin(idempotencyKey: string): Promise<TickResult> {
+  const group = await prisma.group.findFirst({
+    where: { members: { none: { user: { isDemoAccount: true } } } },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (!group) return null;
+
+  const bot = await getRandomDemoBot();
+  if (!bot) return null;
+
+  try {
+    await prisma.groupMember.create({
+      data: { groupId: group.id, userId: bot.id, role: 'MEMBER', demoEventKey: idempotencyKey },
+    });
+    if (group.createdById) {
+      await createNotification({ userId: group.createdById, actorId: bot.id, type: 'GROUP_JOIN', groupId: group.id });
+    }
+    return { event: 'GROUP_JOIN', detail: group.id };
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return null;
+    throw err;
+  }
+}
+
+async function handleGameLeaderboard(tickUserId: string, idempotencyKey: string): Promise<TickResult> {
+  const bot = await getRandomDemoBot();
+  if (!bot) return null;
+
+  const GAME_TYPES = ['TIC_TAC_TOE', 'MEMORY_MATCH', 'REACTION_TIMER'] as const;
+  const gameType = GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)];
+  const score = gameType === 'REACTION_TIMER' ? 150 + Math.floor(Math.random() * 300) : 100 + Math.floor(Math.random() * 800);
+
+  try {
+    await prisma.gameScore.create({ data: { userId: bot.id, gameType, score, demoEventKey: idempotencyKey } });
+
+    const myScores = await prisma.gameScore.findMany({ where: { userId: tickUserId, gameType }, select: { score: true } });
+    const myBest = myScores.reduce<number | null>(
+      (acc, s) => (acc === null || isBetterScore(gameType, s.score, acc) ? s.score : acc),
+      null
+    );
+    if (myBest !== null && isBetterScore(gameType, score, myBest)) {
+      await createNotification({ userId: tickUserId, actorId: bot.id, type: 'LEADERBOARD' });
+    }
+
+    return { event: 'GAME_LEADERBOARD', detail: `${gameType}:${score}` };
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return null;
+    throw err;
+  }
+}
+
 /** Runs exactly one weighted-random demo event for `tickUserId`, or none if
  * the chosen event type has no valid target right now (e.g. no pending
  * request to accept). `idempotencyKey` is `${userId}:${timeBucket}` from the
@@ -262,6 +417,18 @@ export async function runDemoTick(tickUserId: string, idempotencyKey: string, rn
       return handleMessageReply(tickUserId);
     case 'EVENT_ATTEND':
       return handleEventAttend(tickUserId, idempotencyKey);
+    case 'LEARN_SUGGEST':
+      return handleLearnSuggest(tickUserId, idempotencyKey);
+    case 'LEARN_COMPLETE':
+      return handleLearnComplete(idempotencyKey);
+    case 'SAVE_POST':
+      return handleSavePost(tickUserId, idempotencyKey);
+    case 'GROUP_POST':
+      return handleGroupPost(idempotencyKey);
+    case 'GROUP_JOIN':
+      return handleGroupJoin(idempotencyKey);
+    case 'GAME_LEADERBOARD':
+      return handleGameLeaderboard(tickUserId, idempotencyKey);
     default:
       return null;
   }

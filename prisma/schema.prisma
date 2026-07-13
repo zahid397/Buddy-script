@@ -350,6 +350,7 @@ model Notification {
   eventId   String?
   groupId   String?
   isRead    Boolean          @default(false)
+  demoEventKey String?       @unique
   createdAt DateTime         @default(now())
 
   user  User  @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
@@ -386,10 +387,11 @@ model DismissedSuggestion {
 }
 
 model SavedPost {
-  id        String   @id @default(cuid())
-  userId    String
-  postId    String
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  postId       String
+  demoEventKey String?  @unique
+  createdAt    DateTime @default(now())
 
   user User @relation("SavedPosts", fields: [userId], references: [id], onDelete: Cascade)
   post Post @relation("PostSaves", fields: [postId], references: [id], onDelete: Cascade)
