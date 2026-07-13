@@ -5,10 +5,12 @@ import { Moon, Sun } from 'lucide-react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
+import { useDemoSimulator } from '@/hooks/useDemoSimulator';
 
 const THEME_KEY = 'buddyscript-theme';
 
 export default function AppShell({ children }: { children: ReactNode }) {
+  useDemoSimulator();
   const [dark, setDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
