@@ -129,6 +129,7 @@ async function main() {
         avatarUrl: AVATARS[i % AVATARS.length],
         coverImageUrl: COVERS[i % COVERS.length],
         bio: BIOS[i % BIOS.length],
+        isDemoAccount: true,
       },
       create: {
         ...userDefs[i],
@@ -136,6 +137,7 @@ async function main() {
         avatarUrl: AVATARS[i % AVATARS.length],
         coverImageUrl: COVERS[i % COVERS.length],
         bio: BIOS[i % BIOS.length],
+        isDemoAccount: true,
       },
     });
     users.push(u);

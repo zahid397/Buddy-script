@@ -11,6 +11,7 @@ type AuthContextValue = {
   isLoading: boolean;
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  demoLogin: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -52,6 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (res) => queryClient.setQueryData(['me'], res.user),
   });
 
+  const demoLoginMutation = useMutation({
+    mutationFn: () => apiFetch<{ user: PublicUser }>('/api/auth/demo-login', { method: 'POST' }),
+    onSuccess: (res) => queryClient.setQueryData(['me'], res.user),
+  });
+
   const logoutMutation = useMutation({
     mutationFn: () => apiFetch('/api/auth/logout', { method: 'POST' }),
     onSuccess: () => {
@@ -74,13 +80,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [registerMutation]
   );
 
+  const demoLogin = useCallback(async () => {
+    await demoLoginMutation.mutateAsync();
+  }, [demoLoginMutation]);
+
   const logout = useCallback(async () => {
     await logoutMutation.mutateAsync();
   }, [logoutMutation]);
 
   const value = useMemo(
-    () => ({ user: data ?? null, isLoading, login, register, logout }),
-    [data, isLoading, login, register, logout]
+    () => ({ user: data ?? null, isLoading, login, register, demoLogin, logout }),
+    [data, isLoading, login, register, demoLogin, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

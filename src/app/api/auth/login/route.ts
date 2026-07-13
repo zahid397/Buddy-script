@@ -24,6 +24,13 @@ export async function POST(request: NextRequest) {
     return errorResponse(401, 'Invalid email or password');
   }
 
+  // DEMO_BOT personas have an unusable, randomly-generated password and are
+  // never meant to be logged into directly — only the demo engine acts as
+  // them. Use "Continue with Demo Account" instead.
+  if (user.source === 'DEMO_BOT') {
+    return errorResponse(403, 'This is a simulated demo persona and cannot be logged into directly.');
+  }
+
   const passwordMatches = await bcrypt.compare(password, user.password);
   if (!passwordMatches) {
     return errorResponse(401, 'Invalid email or password');
