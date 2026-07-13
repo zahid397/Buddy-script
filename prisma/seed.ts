@@ -271,6 +271,50 @@ async function main() {
     }
   }
 
+  console.log('Seeding groups...');
+  const GROUPS = [
+    { name: 'Web Developers Hub', description: 'Frontend, backend, and everything in between.' },
+    { name: 'UI/UX Community', description: 'Design critiques, portfolio feedback, and process talk.' },
+    { name: 'Godot Game Developers', description: 'Building games with the Godot engine, from jam entries to full releases.' },
+    { name: 'AI & Machine Learning', description: 'Papers, projects, and practical ML engineering.' },
+    { name: 'Career Growth Network', description: 'Interview prep, resume swaps, and career pivots.' },
+    { name: 'Photography Circle', description: 'Weekly photo prompts and gear talk.' },
+  ];
+  for (let i = 0; i < GROUPS.length; i++) {
+    const g = GROUPS[i];
+    const creator = users[i % users.length];
+    const group = await prisma.group.upsert({
+      where: { name: g.name },
+      update: {},
+      create: {
+        name: g.name,
+        description: g.description,
+        coverImageUrl: POST_IMAGES[i % POST_IMAGES.length],
+        createdById: creator.id,
+      },
+    });
+
+    const members = pick(users, 3 + (i % 2));
+    for (const m of members) {
+      await prisma.groupMember.upsert({
+        where: { groupId_userId: { groupId: group.id, userId: m.id } },
+        update: {},
+        create: { groupId: group.id, userId: m.id, role: m.id === creator.id ? 'OWNER' : 'MEMBER' },
+      });
+    }
+
+    const existingPosts = await prisma.groupPost.count({ where: { groupId: group.id } });
+    if (existingPosts === 0) {
+      await prisma.groupPost.create({
+        data: {
+          groupId: group.id,
+          userId: creator.id,
+          content: `Welcome to ${g.name}! Introduce yourself and say what brought you here.`,
+        },
+      });
+    }
+  }
+
   console.log('Seeding messages...');
   const conversationPairs: [number, number][] = [
     [0, 1],

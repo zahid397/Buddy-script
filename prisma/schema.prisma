@@ -30,12 +30,50 @@ enum NotificationType {
   EVENT
   SHARE
   MENTION
+  GROUP_POST
+  GROUP_JOIN
+  LESSON_RECOMMENDED
+  LEADERBOARD
 }
 
 enum UserSource {
   USER
   GOOGLE
   DEMO_BOT
+}
+
+enum ContactPermission {
+  EVERYONE
+  FRIENDS
+  NOBODY
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+}
+
+enum FeedDensity {
+  COMFORTABLE
+  COMPACT
+}
+
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+
+enum LearningCategory {
+  WEB_DEVELOPMENT
+  UI_UX_DESIGN
+  GAME_DEVELOPMENT
+  CAREER_SKILLS
+}
+
+enum GameType {
+  TIC_TAC_TOE
+  MEMORY_MATCH
+  REACTION_TIMER
 }
 
 model User {
@@ -51,6 +89,19 @@ model User {
   isDemoAccount Boolean    @default(false)
   location      String?
   interests     String[]   @default([])
+
+  profileVisibility       PostVisibility    @default(PUBLIC)
+  defaultPostVisibility   PostVisibility    @default(PUBLIC)
+  whoCanSendFriendRequest ContactPermission @default(EVERYONE)
+  whoCanMessage           ContactPermission @default(EVERYONE)
+  notifyOnMessage         Boolean           @default(true)
+  notifyOnFriendRequest   Boolean           @default(true)
+  notifyOnComment         Boolean           @default(true)
+  notifyOnGroupActivity   Boolean           @default(true)
+  notifyOnEvent           Boolean           @default(true)
+  themePreference         ThemePreference   @default(LIGHT)
+  feedDensity             FeedDensity       @default(COMFORTABLE)
+
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -84,6 +135,15 @@ model User {
   dismissedSuggestions DismissedSuggestion[] @relation("DismissedByUser")
   dismissedByOthers    DismissedSuggestion[] @relation("DismissedTarget")
 
+  savedPosts   SavedPost[]   @relation("SavedPosts")
+  savedCourses SavedCourse[] @relation("SavedCourses")
+  lessonProgress UserLessonProgress[] @relation("LessonProgress")
+  gameScores   GameScore[]   @relation("GameScores")
+
+  groupsCreated    Group[]       @relation("GroupsCreated")
+  groupMemberships GroupMember[] @relation("GroupMemberships")
+  groupPosts       GroupPost[]   @relation("GroupPostsAuthored")
+
   @@index([email])
   @@index([isDemoAccount])
 }
@@ -105,6 +165,7 @@ model Post {
   likes      Like[]
   sharedFrom Post?     @relation("PostShares", fields: [sharedFromId], references: [id], onDelete: SetNull)
   shares     Post[]    @relation("PostShares")
+  saves      SavedPost[] @relation("PostSaves")
 
   @@index([userId])
   @@index([createdAt])
@@ -287,6 +348,7 @@ model Notification {
   commentId String?
   replyId   String?
   eventId   String?
+  groupId   String?
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
 
@@ -321,4 +383,137 @@ model DismissedSuggestion {
 
   @@unique([userId, dismissedId])
   @@index([userId])
+}
+
+model SavedPost {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation("SavedPosts", fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation("PostSaves", fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId, createdAt])
+  @@index([postId])
+}
+
+model Group {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  description   String?
+  coverImageUrl String?
+  demoKey       String?  @unique
+  createdById   String?
+  createdAt     DateTime @default(now())
+
+  createdBy User?         @relation("GroupsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  members   GroupMember[]
+  posts     GroupPost[]
+
+  @@index([createdAt])
+}
+
+model GroupMember {
+  id           String    @id @default(cuid())
+  groupId      String
+  userId       String
+  role         GroupRole @default(MEMBER)
+  demoEventKey String?   @unique
+  joinedAt     DateTime  @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation("GroupMemberships", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model GroupPost {
+  id           String   @id @default(cuid())
+  groupId      String
+  userId       String
+  content      String
+  demoEventKey String?  @unique
+  createdAt    DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation("GroupPostsAuthored", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+}
+
+model LearningCourse {
+  id           String           @id @default(cuid())
+  title        String
+  description  String
+  thumbnailUrl String?
+  category     LearningCategory
+  demoKey      String?          @unique
+  createdAt    DateTime         @default(now())
+
+  lessons LearningLesson[]
+  savedBy SavedCourse[]
+
+  @@index([category])
+}
+
+model LearningLesson {
+  id          String   @id @default(cuid())
+  courseId    String
+  title       String
+  content     String
+  order       Int
+  durationMin Int      @default(10)
+  createdAt   DateTime @default(now())
+
+  course   LearningCourse        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress UserLessonProgress[]
+
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model UserLessonProgress {
+  id           String    @id @default(cuid())
+  userId       String
+  lessonId     String
+  completedAt  DateTime?
+  demoEventKey String?   @unique
+  createdAt    DateTime  @default(now())
+
+  user   User           @relation("LessonProgress", fields: [userId], references: [id], onDelete: Cascade)
+  lesson LearningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+}
+
+model SavedCourse {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+
+  user   User           @relation("SavedCourses", fields: [userId], references: [id], onDelete: Cascade)
+  course LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+model GameScore {
+  id           String   @id @default(cuid())
+  userId       String
+  gameType     GameType
+  score        Int
+  demoEventKey String?  @unique
+  createdAt    DateTime @default(now())
+
+  user User @relation("GameScores", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, gameType])
+  @@index([gameType, score])
 }

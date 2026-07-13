@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
     commentId: n.commentId,
     replyId: n.replyId,
     eventId: n.eventId,
+    groupId: n.groupId,
   }));
   const nextCursor = hasMore ? items[items.length - 1].id : null;
 
