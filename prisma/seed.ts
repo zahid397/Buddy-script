@@ -315,6 +315,92 @@ async function main() {
     }
   }
 
+  console.log('Seeding learning content...');
+  const COURSES: {
+    demoKey: string;
+    title: string;
+    description: string;
+    category: 'WEB_DEVELOPMENT' | 'UI_UX_DESIGN' | 'GAME_DEVELOPMENT' | 'CAREER_SKILLS';
+    thumbnailUrl: string;
+    lessons: { title: string; content: string; durationMin: number }[];
+  }[] = [
+    {
+      demoKey: 'course-nextjs-fundamentals',
+      title: 'Modern Next.js Fundamentals',
+      description: 'Learn the App Router, server components, and data fetching patterns used across this app.',
+      category: 'WEB_DEVELOPMENT',
+      thumbnailUrl: '/assets/js/images/react_img1.png',
+      lessons: [
+        { title: 'The App Router mental model', content: 'How file-based routing, layouts, and server components fit together in Next.js 14.', durationMin: 12 },
+        { title: 'Data fetching and caching', content: 'Server-side fetching, revalidation, and when to reach for a client-side query library instead.', durationMin: 15 },
+        { title: 'API routes and middleware', content: 'Building route handlers, validating input, and gating requests with middleware.', durationMin: 10 },
+      ],
+    },
+    {
+      demoKey: 'course-design-systems-101',
+      title: 'Design Systems 101',
+      description: 'A practical introduction to building and maintaining a component-based design system.',
+      category: 'UI_UX_DESIGN',
+      thumbnailUrl: '/assets/js/images/react_img2.png',
+      lessons: [
+        { title: 'Tokens before components', content: 'Why color, spacing, and type scales should exist before a single component does.', durationMin: 10 },
+        { title: 'Component API design', content: 'Designing props that are hard to misuse, with real examples of good and bad APIs.', durationMin: 14 },
+        { title: 'Documenting for adoption', content: 'The documentation habits that determine whether a design system actually gets used.', durationMin: 8 },
+      ],
+    },
+    {
+      demoKey: 'course-godot-basics',
+      title: 'Godot Basics',
+      description: 'Get comfortable with the Godot editor, scenes, and GDScript before your first small game.',
+      category: 'GAME_DEVELOPMENT',
+      thumbnailUrl: '/assets/js/images/react_img3.png',
+      lessons: [
+        { title: 'Scenes and nodes', content: 'How Godot composes everything from a single sprite to a full level out of scenes and nodes.', durationMin: 11 },
+        { title: 'Your first GDScript', content: 'Movement, input handling, and signals — the three things almost every script needs.', durationMin: 13 },
+      ],
+    },
+    {
+      demoKey: 'course-technical-interview',
+      title: 'Ace Your Technical Interview',
+      description: 'A no-fluff walkthrough of how to prepare for and perform in a software engineering interview.',
+      category: 'CAREER_SKILLS',
+      thumbnailUrl: '/assets/js/images/recommend1.png',
+      lessons: [
+        { title: 'What interviewers actually evaluate', content: 'Beyond the right answer: communication, tradeoff reasoning, and how you handle being stuck.', durationMin: 9 },
+        { title: 'Practicing without burning out', content: 'A sustainable practice routine instead of cramming every algorithm the night before.', durationMin: 7 },
+      ],
+    },
+  ];
+
+  for (const c of COURSES) {
+    const course = await prisma.learningCourse.upsert({
+      where: { demoKey: c.demoKey },
+      update: { title: c.title, description: c.description, category: c.category, thumbnailUrl: c.thumbnailUrl },
+      create: {
+        demoKey: c.demoKey,
+        title: c.title,
+        description: c.description,
+        category: c.category,
+        thumbnailUrl: c.thumbnailUrl,
+      },
+    });
+
+    for (let i = 0; i < c.lessons.length; i++) {
+      const l = c.lessons[i];
+      await prisma.learningLesson.upsert({
+        where: { courseId_order: { courseId: course.id, order: i } },
+        update: { title: l.title, content: l.content, durationMin: l.durationMin },
+        create: {
+          courseId: course.id,
+          title: l.title,
+          content: l.content,
+          durationMin: l.durationMin,
+          order: i,
+        },
+      });
+    }
+  }
+
   console.log('Seeding messages...');
   const conversationPairs: [number, number][] = [
     [0, 1],
