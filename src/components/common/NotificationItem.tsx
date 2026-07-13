@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, Calendar, Heart, MessageCircle, MessageSquare, Share2, UserPlus, Users } from 'lucide-react';
+import { AtSign, Bell, Calendar, Heart, MessageCircle, MessageSquare, Share2, UserPlus, Users } from 'lucide-react';
 import type { NotificationDTO } from '@/types';
 import { timeAgo } from '@/lib/time';
 import { useMarkNotificationRead } from '@/hooks/useNotifications';
@@ -16,6 +16,7 @@ const ICONS: Record<NotificationDTO['type'], typeof Bell> = {
   MESSAGE: MessageCircle,
   EVENT: Calendar,
   SHARE: Share2,
+  MENTION: AtSign,
 };
 
 function messageFor(n: NotificationDTO): string {
@@ -39,6 +40,8 @@ function messageFor(n: NotificationDTO): string {
       return `${name} is going to your event`;
     case 'SHARE':
       return `${name} shared your post`;
+    case 'MENTION':
+      return `${name} mentioned you in a post`;
     default:
       return 'New notification';
   }

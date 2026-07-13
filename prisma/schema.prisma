@@ -29,19 +29,30 @@ enum NotificationType {
   MESSAGE
   EVENT
   SHARE
+  MENTION
+}
+
+enum UserSource {
+  USER
+  GOOGLE
+  DEMO_BOT
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
+  id            String     @id @default(cuid())
+  email         String     @unique
   firstName     String
   lastName      String
   password      String
   avatarUrl     String?
   coverImageUrl String?
   bio           String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  source        UserSource @default(USER)
+  isDemoAccount Boolean    @default(false)
+  location      String?
+  interests     String[]   @default([])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   posts        Post[]
   comments     Comment[]
@@ -67,7 +78,14 @@ model User {
   notifications          Notification[] @relation("UserNotifications")
   triggeredNotifications Notification[] @relation("ActorNotifications")
 
+  blocksMade     Block[] @relation("BlocksMade")
+  blocksReceived Block[] @relation("BlocksReceived")
+
+  dismissedSuggestions DismissedSuggestion[] @relation("DismissedByUser")
+  dismissedByOthers    DismissedSuggestion[] @relation("DismissedTarget")
+
   @@index([email])
+  @@index([isDemoAccount])
 }
 
 model Post {
@@ -78,6 +96,7 @@ model Post {
   visibility    PostVisibility @default(PUBLIC)
   userId        String
   sharedFromId  String?
+  demoEventKey  String?        @unique
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -94,11 +113,12 @@ model Post {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  userId    String
-  postId    String
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  content      String
+  userId       String
+  postId       String
+  demoEventKey String?  @unique
+  createdAt    DateTime @default(now())
 
   user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -125,10 +145,11 @@ model Reply {
 }
 
 model Like {
-  id        String   @id @default(cuid())
-  userId    String
-  postId    String
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  postId       String
+  demoEventKey String?  @unique
+  createdAt    DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -164,12 +185,13 @@ model ReplyLike {
 }
 
 model FriendRequest {
-  id         String              @id @default(cuid())
-  senderId   String
-  receiverId String
-  status     FriendRequestStatus @default(PENDING)
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  id           String              @id @default(cuid())
+  senderId     String
+  receiverId   String
+  status       FriendRequestStatus @default(PENDING)
+  demoEventKey String?             @unique
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
   sender   User @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -224,10 +246,11 @@ model Event {
 }
 
 model EventAttendee {
-  id        String   @id @default(cuid())
-  eventId   String
-  userId    String
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  eventId      String
+  userId       String
+  demoEventKey String?  @unique
+  createdAt    DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -238,12 +261,14 @@ model EventAttendee {
 }
 
 model Message {
-  id         String    @id @default(cuid())
-  senderId   String
-  receiverId String
-  content    String
-  readAt     DateTime?
-  createdAt  DateTime  @default(now())
+  id           String    @id @default(cuid())
+  senderId     String
+  receiverId   String
+  content      String
+  readAt       DateTime?
+  isAutoReply  Boolean   @default(false)
+  demoEventKey String?   @unique
+  createdAt    DateTime  @default(now())
 
   sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -269,4 +294,31 @@ model Notification {
   actor User? @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead, createdAt])
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("BlocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+model DismissedSuggestion {
+  id            String   @id @default(cuid())
+  userId        String
+  dismissedId   String
+  createdAt     DateTime @default(now())
+
+  user       User @relation("DismissedByUser", fields: [userId], references: [id], onDelete: Cascade)
+  dismissed  User @relation("DismissedTarget", fields: [dismissedId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dismissedId])
+  @@index([userId])
 }

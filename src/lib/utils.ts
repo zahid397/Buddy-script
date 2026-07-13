@@ -15,15 +15,19 @@ export function toPublicUser(user: User): PublicUser {
     avatarUrl: user.avatarUrl,
     coverImageUrl: user.coverImageUrl,
     bio: user.bio,
+    isDemoAccount: user.isDemoAccount,
     createdAt: user.createdAt.toISOString(),
   };
 }
 
-export function toPostAuthor(user: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>): PostAuthor {
+export function toPostAuthor(
+  user: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'isDemoAccount'>
+): PostAuthor {
   return {
     id: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
     avatarUrl: user.avatarUrl,
+    isDemoAccount: user.isDemoAccount,
   };
 }

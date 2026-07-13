@@ -8,10 +8,11 @@ export type PublicUser = {
   avatarUrl: string | null;
   coverImageUrl: string | null;
   bio: string | null;
+  isDemoAccount: boolean;
   createdAt: string;
 };
 
-export type PostAuthor = Pick<PublicUser, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
+export type PostAuthor = Pick<PublicUser, 'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'isDemoAccount'>;
 
 export type SharedPostSummary = {
   id: string;
@@ -121,7 +122,8 @@ export type NotificationType =
   | 'REPLY'
   | 'MESSAGE'
   | 'EVENT'
-  | 'SHARE';
+  | 'SHARE'
+  | 'MENTION';
 
 export type NotificationDTO = {
   id: string;
