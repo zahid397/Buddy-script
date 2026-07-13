@@ -262,3 +262,5 @@ Vitest, unit-level, against a deep-mocked Prisma client (`src/lib/testUtils/pris
 ## What's not included
 
 No live Vercel deployment, no Cloudinary/Google Cloud accounts, and no video walkthrough were created by the assistant — those require your own accounts/credentials or manual recording. Everything above is scaffolded, seeded, tested, and verified end-to-end (automated API checks, unit tests, and manual browser testing), ready for you to run through the deployment steps yourself.
+#   B u d d y - s c r i p t  
+ 
