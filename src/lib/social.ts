@@ -57,6 +57,19 @@ export async function isFollowing(followerId: string, followingId: string): Prom
   return Boolean(follow);
 }
 
+/** True if either user has blocked the other. */
+export async function isBlockedEitherWay(userIdA: string, userIdB: string): Promise<boolean> {
+  const block = await prisma.block.findFirst({
+    where: {
+      OR: [
+        { blockerId: userIdA, blockedId: userIdB },
+        { blockerId: userIdB, blockedId: userIdA },
+      ],
+    },
+  });
+  return Boolean(block);
+}
+
 export async function canViewPost(
   post: { userId: string; visibility: 'PUBLIC' | 'FRIENDS' | 'PRIVATE' },
   viewerId: string

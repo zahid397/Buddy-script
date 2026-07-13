@@ -4,6 +4,7 @@ import { getAuthUserId } from '@/lib/auth';
 import { errorResponse } from '@/lib/utils';
 import { paginationQuerySchema, sendMessageSchema } from '@/lib/validation';
 import { createNotification } from '@/lib/notifications';
+import { isBlockedEitherWay } from '@/lib/social';
 import type { MessageDTO } from '@/types';
 
 function toMessageDTO(m: { id: string; content: string; senderId: string; receiverId: string; createdAt: Date; readAt: Date | null }): MessageDTO {
@@ -56,6 +57,10 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
 
   const receiver = await prisma.user.findUnique({ where: { id: params.userId } });
   if (!receiver) return errorResponse(404, 'User not found');
+
+  if (await isBlockedEitherWay(userId, params.userId)) {
+    return errorResponse(403, "You can't message this user");
+  }
 
   const body = await request.json().catch(() => null);
   const parsed = sendMessageSchema.safeParse(body);

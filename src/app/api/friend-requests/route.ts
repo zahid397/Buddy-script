@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthUserId } from '@/lib/auth';
 import { errorResponse, toPostAuthor } from '@/lib/utils';
 import { createNotification } from '@/lib/notifications';
+import { isBlockedEitherWay } from '@/lib/social';
 
 const sendRequestSchema = z.object({ receiverId: z.string().min(1) });
 
@@ -45,6 +46,10 @@ export async function POST(request: NextRequest) {
 
   const receiver = await prisma.user.findUnique({ where: { id: receiverId } });
   if (!receiver) return errorResponse(404, 'User not found');
+
+  if (await isBlockedEitherWay(userId, receiverId)) {
+    return errorResponse(403, "You can't send a friend request to this user");
+  }
 
   const existingFriendship = await prisma.friendship.findUnique({
     where: { userId_friendId: { userId, friendId: receiverId } },
