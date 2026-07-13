@@ -4,19 +4,13 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { Bell, ChevronDown, Home, LogOut, MessageCircle, Search, Settings, UserRoundPlus, HelpCircle, Menu } from 'lucide-react';
+import { Bell, ChevronDown, Home, LogOut, MessageCircle, Search, Settings, UserRoundPlus, Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { useUnreadMessageCount } from '@/hooks/useMessages';
 import { useMarkAllNotificationsRead, useNotifications, useUnreadNotificationCount } from '@/hooks/useNotifications';
 import NotificationItem from '../common/NotificationItem';
 import HeaderSearch from './HeaderSearch';
-
-const NOT_IMPLEMENTED_MESSAGE = "This isn't part of the demo scope, but the UI is here for fidelity.";
-
-function notImplemented() {
-  toast(NOT_IMPLEMENTED_MESSAGE, { icon: '🚧' });
-}
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -162,20 +156,12 @@ export default function Header() {
               <hr />
               <ul className="_nav_dropdown_list">
                 <li className="_nav_dropdown_list_item">
-                  <button type="button" className="_nav_dropdown_link" onClick={notImplemented}>
+                  <Link href="/settings" className="_nav_dropdown_link" onClick={() => setProfileOpen(false)}>
                     <div className="_nav_drop_info">
                       <span><Settings size={16} color="#377DFF" /></span>
                       Settings
                     </div>
-                  </button>
-                </li>
-                <li className="_nav_dropdown_list_item">
-                  <button type="button" className="_nav_dropdown_link" onClick={notImplemented}>
-                    <div className="_nav_drop_info">
-                      <span><HelpCircle size={16} color="#377DFF" /></span>
-                      Help &amp; Support
-                    </div>
-                  </button>
+                  </Link>
                 </li>
                 <li className="_nav_dropdown_list_item">
                   <button type="button" className="_nav_dropdown_link" onClick={handleLogout}>

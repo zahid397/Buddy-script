@@ -27,6 +27,12 @@ const INVALIDATION_MAP: Record<DemoEventType, string[][]> = {
   MESSAGE: [['conversations'], ['messages-unread-count'], ['notifications'], ['notifications-unread-count']],
   MESSAGE_REPLY: [['conversations'], ['messages'], ['messages-unread-count'], ['notifications'], ['notifications-unread-count']],
   EVENT_ATTEND: [['events'], ['notifications'], ['notifications-unread-count']],
+  LEARN_SUGGEST: [['notifications'], ['notifications-unread-count']],
+  LEARN_COMPLETE: [['learning-courses']],
+  SAVE_POST: [['bookmarks']],
+  GROUP_POST: [['group-posts'], ['groups'], ['notifications'], ['notifications-unread-count']],
+  GROUP_JOIN: [['groups'], ['notifications'], ['notifications-unread-count']],
+  GAME_LEADERBOARD: [['game-leaderboard'], ['game-best-scores'], ['notifications'], ['notifications-unread-count']],
 };
 
 /** Mounted once in AppShell. While DEMO_MODE is on and someone is signed

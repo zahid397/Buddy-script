@@ -41,3 +41,19 @@
     rgba(255, 255, 255, 0)
   );
 }
+
+/* Settings > Appearance > compact feed density */
+._compact_density ._feed_inner_timeline_post_area {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 8px !important;
+}
+
+._compact_density ._feed_inner_timeline_image {
+  max-height: 260px;
+  overflow: hidden;
+}
+
+._compact_density ._feed_inner_timeline_total_reacts {
+  margin-bottom: 12px !important;
+}

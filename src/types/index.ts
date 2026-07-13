@@ -35,6 +35,7 @@ export type PostDTO = {
   commentCount: number;
   shareCount: number;
   likedByMe: boolean;
+  savedByMe: boolean;
   isMine: boolean;
   sharedFrom: SharedPostSummary;
 };
@@ -123,7 +124,11 @@ export type NotificationType =
   | 'MESSAGE'
   | 'EVENT'
   | 'SHARE'
-  | 'MENTION';
+  | 'MENTION'
+  | 'GROUP_POST'
+  | 'GROUP_JOIN'
+  | 'LESSON_RECOMMENDED'
+  | 'LEADERBOARD';
 
 export type NotificationDTO = {
   id: string;
@@ -135,6 +140,115 @@ export type NotificationDTO = {
   commentId: string | null;
   replyId: string | null;
   eventId: string | null;
+  groupId: string | null;
+};
+
+export type SavedPostDTO = {
+  id: string;
+  savedAt: string;
+  post: PostDTO;
+};
+
+export type ContactPermission = 'EVERYONE' | 'FRIENDS' | 'NOBODY';
+export type ThemePreference = 'LIGHT' | 'DARK';
+export type FeedDensity = 'COMFORTABLE' | 'COMPACT';
+
+export type SettingsDTO = {
+  profile: {
+    firstName: string;
+    lastName: string;
+    bio: string | null;
+    location: string | null;
+    avatarUrl: string | null;
+    coverImageUrl: string | null;
+  };
+  account: {
+    email: string;
+    createdAt: string;
+    source: 'USER' | 'GOOGLE' | 'DEMO_BOT';
+  };
+  privacy: {
+    profileVisibility: PostVisibility;
+    defaultPostVisibility: PostVisibility;
+    whoCanSendFriendRequest: ContactPermission;
+    whoCanMessage: ContactPermission;
+  };
+  notifications: {
+    notifyOnMessage: boolean;
+    notifyOnFriendRequest: boolean;
+    notifyOnComment: boolean;
+    notifyOnGroupActivity: boolean;
+    notifyOnEvent: boolean;
+  };
+  appearance: {
+    themePreference: ThemePreference;
+    feedDensity: FeedDensity;
+  };
+};
+
+export type GroupDTO = {
+  id: string;
+  name: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  memberCount: number;
+  isMember: boolean;
+  role: 'OWNER' | 'MEMBER' | null;
+};
+
+export type GroupPostDTO = {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: PostAuthor;
+};
+
+export type LearningCategoryValue = 'WEB_DEVELOPMENT' | 'UI_UX_DESIGN' | 'GAME_DEVELOPMENT' | 'CAREER_SKILLS';
+
+export type LearningLessonDTO = {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  durationMin: number;
+  completed: boolean;
+};
+
+export type LearningCourseDTO = {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string | null;
+  category: LearningCategoryValue;
+  lessonCount: number;
+  completedLessonCount: number;
+  progressPercent: number;
+  isSaved: boolean;
+  lessons: LearningLessonDTO[];
+};
+
+export type GameType = 'TIC_TAC_TOE' | 'MEMORY_MATCH' | 'REACTION_TIMER';
+
+export type GameLeaderboardEntryDTO = {
+  user: PostAuthor;
+  score: number;
+  isMe: boolean;
+};
+
+export type InsightsDTO = {
+  totalPosts: number;
+  totalLikesReceived: number;
+  totalCommentsReceived: number;
+  friendsCount: number;
+  followersCount: number;
+  followingCount: number;
+  messagesSent: number;
+  unreadNotifications: number;
+  eventsJoined: number;
+  savedPostsCount: number;
+  profileCompletionPercent: number;
+  weeklyActivity: { date: string; posts: number; likes: number; comments: number }[];
+  topPost: PostDTO | null;
 };
 
 export type ProfileDTO = {

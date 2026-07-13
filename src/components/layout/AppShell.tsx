@@ -1,35 +1,24 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
 import { useDemoSimulator } from '@/hooks/useDemoSimulator';
-
-const THEME_KEY = 'buddyscript-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   useDemoSimulator();
-  const [dark, setDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    if (localStorage.getItem(THEME_KEY) === 'dark') setDark(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted) localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
-  }, [dark, mounted]);
+  const { dark, compact, setDark } = useTheme();
 
   return (
-    <div className={`_layout _layout_main_wrapper${dark ? ' _dark_wrapper' : ''}`}>
+    <div className={`_layout _layout_main_wrapper${dark ? ' _dark_wrapper' : ''}${compact ? ' _compact_density' : ''}`}>
       <div className="_layout_mode_swithing_btn">
         <button
           type="button"
           className="_layout_swithing_btn_link"
-          onClick={() => setDark((d) => !d)}
+          onClick={() => setDark(!dark)}
           aria-label="Toggle dark mode"
         >
           <div className="_layout_swithing_btn">

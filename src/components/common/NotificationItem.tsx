@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AtSign, Bell, Calendar, Heart, MessageCircle, MessageSquare, Share2, UserPlus, Users } from 'lucide-react';
+import { AtSign, Bell, Calendar, GraduationCap, Heart, MessageCircle, MessageSquare, Share2, Trophy, UserPlus, Users, Users2 } from 'lucide-react';
 import type { NotificationDTO } from '@/types';
 import { timeAgo } from '@/lib/time';
 import { useMarkNotificationRead } from '@/hooks/useNotifications';
@@ -17,6 +17,10 @@ const ICONS: Record<NotificationDTO['type'], typeof Bell> = {
   EVENT: Calendar,
   SHARE: Share2,
   MENTION: AtSign,
+  GROUP_POST: Users2,
+  GROUP_JOIN: Users2,
+  LESSON_RECOMMENDED: GraduationCap,
+  LEADERBOARD: Trophy,
 };
 
 function messageFor(n: NotificationDTO): string {
@@ -42,6 +46,14 @@ function messageFor(n: NotificationDTO): string {
       return `${name} shared your post`;
     case 'MENTION':
       return `${name} mentioned you in a post`;
+    case 'GROUP_POST':
+      return `${name} posted in a group you're in`;
+    case 'GROUP_JOIN':
+      return `${name} joined a group you're in`;
+    case 'LESSON_RECOMMENDED':
+      return 'A new lesson was recommended for you';
+    case 'LEADERBOARD':
+      return 'Your position on a game leaderboard changed';
     default:
       return 'New notification';
   }
@@ -50,6 +62,9 @@ function messageFor(n: NotificationDTO): string {
 function hrefFor(n: NotificationDTO): string {
   if (n.type === 'MESSAGE' && n.actor) return `/messages/${n.actor.id}`;
   if (n.type === 'EVENT') return '/feed';
+  if (n.type === 'GROUP_POST' || n.type === 'GROUP_JOIN') return n.groupId ? `/groups/${n.groupId}` : '/groups';
+  if (n.type === 'LESSON_RECOMMENDED') return '/learning';
+  if (n.type === 'LEADERBOARD') return '/gaming';
   if (n.actor) return `/profile/${n.actor.id}`;
   return '/notifications';
 }

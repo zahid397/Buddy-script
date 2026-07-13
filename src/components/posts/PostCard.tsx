@@ -3,9 +3,10 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { Globe, Heart, Lock, MessageCircle, MoreHorizontal, Share2, Trash2, Users } from 'lucide-react';
+import { Bookmark, Globe, Heart, Lock, MessageCircle, MoreHorizontal, Share2, Trash2, Users } from 'lucide-react';
 import type { PostDTO } from '@/types';
 import { useDeletePost, useLikePost, useSharePost } from '@/hooks/usePosts';
+import { useSavePost } from '@/hooks/useBookmarks';
 import { timeAgo } from '@/lib/time';
 import { ApiError } from '@/lib/api';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
@@ -24,11 +25,13 @@ export default function PostCard({ post }: { post: PostDTO }) {
   const likeMutation = useLikePost();
   const deleteMutation = useDeletePost();
   const shareMutation = useSharePost();
+  const saveMutation = useSavePost();
   const [showComments, setShowComments] = useState(false);
   const [showLikes, setShowLikes] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [shareCount, setShareCount] = useState(post.shareCount);
+  const [savedByMe, setSavedByMe] = useState(post.savedByMe);
   const menuRef = useRef<HTMLDivElement>(null);
   useOnClickOutside(menuRef, () => setMenuOpen(false));
 
@@ -55,6 +58,18 @@ export default function PostCard({ post }: { post: PostDTO }) {
       toast.success('Shared to your timeline');
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : 'Failed to share post');
+    }
+  };
+
+  const handleSave = async () => {
+    const next = !savedByMe;
+    setSavedByMe(next);
+    try {
+      await saveMutation.mutateAsync({ postId: post.id, saved: savedByMe });
+      toast.success(next ? 'Saved to Bookmarks' : 'Removed from Bookmarks');
+    } catch (err) {
+      setSavedByMe(!next);
+      toast.error(err instanceof ApiError ? err.message : 'Failed to update bookmark');
     }
   };
 
@@ -189,6 +204,19 @@ export default function PostCard({ post }: { post: PostDTO }) {
           <span className="_feed_inner_timeline_reaction_link">
             <span>
               <Share2 size={16} /> Share
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          className={`_feed_reaction${savedByMe ? ' _feed_reaction_active' : ''}`}
+          onClick={handleSave}
+          aria-pressed={savedByMe}
+          aria-label={savedByMe ? 'Remove from Bookmarks' : 'Save Post'}
+        >
+          <span className="_feed_inner_timeline_reaction_link">
+            <span>
+              <Bookmark size={16} fill={savedByMe ? '#1890FF' : 'none'} /> {savedByMe ? 'Saved' : 'Save'}
             </span>
           </span>
         </button>
