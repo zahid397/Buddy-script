@@ -8,6 +8,7 @@ type PostWithRelations = Post & {
   user: User;
   _count: { likes: number; comments: number; shares: number };
   likes: { id: string }[];
+  saves: { id: string }[];
   sharedFrom: SharedFromWithRelations | null;
 };
 
@@ -24,6 +25,7 @@ export function toPostDTO(post: PostWithRelations, viewerId: string): PostDTO {
     commentCount: post._count.comments,
     shareCount: post._count.shares,
     likedByMe: post.likes.length > 0,
+    savedByMe: post.saves.length > 0,
     isMine: post.userId === viewerId,
     sharedFrom: post.sharedFrom
       ? {
@@ -105,6 +107,7 @@ export const postInclude = (viewerId: string) => ({
   user: true,
   _count: { select: { likes: true, comments: true, shares: true } },
   likes: { where: { userId: viewerId }, select: { id: true } },
+  saves: { where: { userId: viewerId }, select: { id: true } },
   sharedFrom: { include: { user: true } },
 });
 
