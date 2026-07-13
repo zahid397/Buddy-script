@@ -5,6 +5,8 @@ import { errorResponse } from '@/lib/utils';
 import { createPostSchema, paginationQuerySchema } from '@/lib/validation';
 import { postInclude, toPostDTO } from '@/lib/dto';
 import { getFriendIds } from '@/lib/social';
+import { extractMentionedUserIds } from '@/lib/mentions';
+import { createNotification } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   const userId = await getAuthUserId(request);
@@ -60,6 +62,13 @@ export async function POST(request: NextRequest) {
     },
     include: postInclude(userId),
   });
+
+  const mentionedUserIds = await extractMentionedUserIds(post.content, userId);
+  await Promise.all(
+    mentionedUserIds.map((mentionedId) =>
+      createNotification({ userId: mentionedId, actorId: userId, type: 'MENTION', postId: post.id })
+    )
+  );
 
   return NextResponse.json({ post: toPostDTO(post, userId) }, { status: 201 });
 }
