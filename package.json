@@ -13,7 +13,9 @@
     "db:seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts",
     "db:studio": "prisma studio",
     "demo:seed": "ts-node -r tsconfig-paths/register --project prisma/tsconfig.seed.json prisma/seed-demo.ts",
-    "demo:reset": "npm run demo:seed"
+    "demo:reset": "npm run demo:seed",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "prisma": {
     "seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts"
@@ -43,6 +45,7 @@
     "@types/node": "^20.11.16",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react": "^6.0.3",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.2.35",
@@ -50,7 +53,10 @@
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.10",
+    "vitest-mock-extended": "^4.0.0"
   },
   "allowScripts": {
     "@prisma/client@5.22.0": true,
