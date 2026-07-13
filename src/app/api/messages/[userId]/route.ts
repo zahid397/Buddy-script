@@ -5,6 +5,7 @@ import { errorResponse } from '@/lib/utils';
 import { paginationQuerySchema, sendMessageSchema } from '@/lib/validation';
 import { createNotification } from '@/lib/notifications';
 import { isBlockedEitherWay } from '@/lib/social';
+import { findLatestUnansweredMessage, markSeenIfDue, tryMaterializeReply } from '@/lib/demo/reply-engine';
 import type { MessageDTO } from '@/types';
 
 function toMessageDTO(m: { id: string; content: string; senderId: string; receiverId: string; createdAt: Date; readAt: Date | null }): MessageDTO {
@@ -21,6 +22,18 @@ function toMessageDTO(m: { id: string; content: string; senderId: string; receiv
 export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
   const userId = await getAuthUserId(request);
   if (!userId) return errorResponse(401, 'Not authenticated');
+
+  const otherUser = await prisma.user.findUnique({ where: { id: params.userId }, select: { isDemoAccount: true } });
+  if (otherUser?.isDemoAccount) {
+    // Polling this thread is what "wakes up" the bot's reply — see
+    // src/lib/demo/reply-engine.ts for why this is lazy rather than a
+    // background job (no persistent process on serverless).
+    const unanswered = await findLatestUnansweredMessage(userId, params.userId);
+    if (unanswered) {
+      await markSeenIfDue(unanswered);
+      await tryMaterializeReply(unanswered);
+    }
+  }
 
   const { searchParams } = request.nextUrl;
   const parsed = paginationQuerySchema.safeParse({

@@ -36,6 +36,17 @@ export function isReplyDue(userMessage: Message): boolean {
   return Date.now() >= replyDue;
 }
 
+/** Marks the message seen as soon as the bot would plausibly have opened
+ * the thread (the typing-start threshold), which reads more naturally than
+ * waiting for the full reply — most chat apps show a read receipt well
+ * before the other person finishes typing. Safe to call on every poll. */
+export async function markSeenIfDue(userMessage: Message): Promise<void> {
+  if (userMessage.readAt) return;
+  const typingStart = userMessage.createdAt.getTime() + typingStartOffsetMs(userMessage.id);
+  if (Date.now() < typingStart) return;
+  await prisma.message.update({ where: { id: userMessage.id }, data: { readAt: new Date() } }).catch(() => undefined);
+}
+
 /** Marks the user's message seen and creates the bot's reply, keyed by
  * `reply:${userMessage.id}` on Message.demoEventKey so this can safely be
  * called from both the polling chat UI and the tick engine — whichever
@@ -45,9 +56,7 @@ export function isReplyDue(userMessage: Message): boolean {
 export async function tryMaterializeReply(userMessage: Message): Promise<Message | null> {
   if (!isReplyDue(userMessage)) return null;
 
-  if (!userMessage.readAt) {
-    await prisma.message.update({ where: { id: userMessage.id }, data: { readAt: new Date() } }).catch(() => undefined);
-  }
+  await markSeenIfDue(userMessage);
 
   const lastBotReply = await prisma.message.findFirst({
     where: { senderId: userMessage.receiverId, receiverId: userMessage.senderId },
