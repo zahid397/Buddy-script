@@ -128,5 +128,25 @@ export async function seedDemoPersonas(): Promise<{ personaCount: number }> {
     }
   }
 
+  // Seed one leaderboard-worthy score per persona per game so /gaming's
+  // leaderboard isn't empty before a real user ever plays. Keyed so
+  // reseeding never creates duplicate rows.
+  const gameScoreSeeds: { gameType: 'TIC_TAC_TOE' | 'MEMORY_MATCH' | 'REACTION_TIMER'; scoreRange: [number, number] }[] = [
+    { gameType: 'TIC_TAC_TOE', scoreRange: [50, 140] },
+    { gameType: 'MEMORY_MATCH', scoreRange: [200, 950] },
+    { gameType: 'REACTION_TIMER', scoreRange: [180, 480] },
+  ];
+  for (const persona of personas) {
+    for (const { gameType, scoreRange } of gameScoreSeeds) {
+      const demoEventKey = `seed-score:${persona.id}:${gameType}`;
+      const score = scoreRange[0] + Math.floor(Math.random() * (scoreRange[1] - scoreRange[0]));
+      await prisma.gameScore.upsert({
+        where: { demoEventKey },
+        update: {},
+        create: { userId: persona.id, gameType, score, demoEventKey },
+      });
+    }
+  }
+
   return { personaCount: personas.length };
 }
