@@ -580,7 +580,7 @@ npm run test:watch
 
 Vitest, unit-level, against a deep-mocked Prisma client (`src/lib/testUtils/prismaMock.ts`, via `vitest-mock-extended`) rather than a live test database — faster and flake-free for the logic being verified: suggestion exclusions, duplicate-request prevention, friendship creation, notification unread-count math, demo-tick idempotency, single-reply-only, seen-status timing, the seed script never touching real users, demo routes 404ing outside Demo Mode, and Google/demo login being provably independent code paths. A real integration suite against a disposable test database (e.g. a throwaway Neon branch per CI run) is the natural next step, not attempted here.
 
----
+
 
 ## ☁️ Deployment
 
